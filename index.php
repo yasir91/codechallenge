@@ -44,128 +44,16 @@ class Sudoku
     private $_blocks;
     private $_blocks_to_traverse;
     private $_probable_sudoku;
-    // private $_probable_sudoku;
     private $_chances;
-
+    private $_repeaters;
+    private $_column_check_complete = 0;
     private $_repeater_found = 0;
-
-
-    private $_block_WO_biggest_block;
-    private $_trim_blocks;
-    private $_block_to_solve;
-    private $_k1, $_k2;
 
     public function __construct($unsolved_sudoku)
     {
         $this->_unsolved_sudoku = $unsolved_sudoku;
         $this->set_blocks();
         $this->transpose_blocks();
-    }
-
-    /**
-     * Solve Suduko
-     *
-     * @return void
-     */
-    public function solve()
-    {
-        $this->transpose_blocks();
-        $this->set_blocks();
-        // $this->print_sudoku();
-        $this->_probable_sudoku = $this->_unsolved_sudoku;
-        // $this->solve2();
-
-        $possible = [];
-        // print_r($this->_blocks);
-        // print_r($this->_blocks_to_traverse);
-
-        foreach ($this->_unsolved_sudoku as $k => $v) {
-
-            foreach ($v as $kk => $vv) {
-                // echo '<br>' . $k . ',' . $kk . '<br>';
-
-                if ($vv === 0) {
-                    // echo '<br>-------------------------Empty cell<br>';
-                    for ($i = 1; $i <= 9; $i++) {
-                        // echo '<br>----------------------------------------------------------------------------------------------------Testing for: ' . $i;
-                        $valid = true;
-
-
-                        $block = 1;
-                        if ($kk > 2) $block = 2;
-                        if ($kk > 5) $block = 3;
-
-                        $block_row = 1;
-                        if ($k > 2) $block_row = 2;
-                        if ($k > 5) $block_row = 3;
-                        // echo '---------------check block:' . (in_array($i, $this->_blocks[$block_row][$block]) ? 'fail' : 'pass') . '<br>';
-
-
-                        if ($valid && in_array($i, $this->_blocks[$block_row][$block])) {
-                            // echo '<br>======= Inside 3rd check on: ' . $i . '<br>';
-                            // echo json_encode($this->_blocks[$block_row][$block]);
-
-                            // print_r($this->_blocks[$block_row][$block]);
-                            $valid = false;
-                        }
-
-                        // echo '<br>---------------check rows:' . (in_array($i, $this->_unsolved_sudoku[$k]) ? 'fail' : 'pass') . '<br>';
-
-                        if (in_array($i, $this->_unsolved_sudoku[$k])) {
-                            // echo '<br>======= Inside 1st check on: ' . $i . '<br>';
-                            // echo json_encode($this->_unsolved_sudoku[$k]);
-                            // print_r($this->_unsolved_sudoku[$k]);
-                            $valid = false;
-                        }
-
-                        // echo '---------------check columns:' . (in_array($i, $this->_transposed[$kk]) ? 'fail' : 'pass') . '<br>';
-
-                        if ($valid && in_array($i, $this->_transposed[$kk])) {
-                            // echo '<br>======= Inside 2nd check on: ' . $i . '<br>';
-                            // echo json_encode($this->_transposed[$kk]);
-
-                            // print_r($this->_transposed[$k]);
-                            $valid = false;
-                        }
-
-
-                        if ($valid) {
-
-                            $this->_probable_sudoku[$k][$kk] = '0' . $i;
-                            // $this->_unsolved_sudoku[$k][$kk] = '0' . $i;
-                            $this->transpose_blocks($this->_probable_sudoku);
-                            $this->set_blocks($this->_probable_sudoku);
-                            // $possible[]=$this->_probable_sudoku;
-                            // foreach($possible as $p => $pv){
-                            // echo '<br>';
-                            // $this->print_sudoku($pv);
-                            // $this->print_sudoku($this->_probable_sudoku);
-                            // $this->print_sudoku();
-                            // }
-                            break;
-                        }
-                        // if ($k > 1) {
-                        //     break 3;
-                        // }
-                    }
-                }
-            }
-        }
-
-        //get the biggest block first
-        // $bb = $this->get_biggest_block();
-
-        // print_r($this->_blocks[$this->_k1][$this->_k2]);
-
-        // foreach ($this->_unsolved_sudoku as $k => $v) {
-        // }
-
-        //print sudoku
-        // $this->print_sudoku();
-
-
-        // $this->print_sudoku($this->_transposed);
-        // $this->solve2();
     }
 
 
@@ -242,13 +130,9 @@ class Sudoku
     {
         foreach ($this->_chances as $nk => $ns) { // numbers
             foreach ($ns as $bsk => $blks) { // blocks
-                // print_r($blks);
-                // echo "<br>---------------------------------------------------------------------<br>";
                 foreach ($blks as $bk => $blk) { // block
                     foreach ($blk as $brk => $blkrow) { // block row
                         foreach ($blkrow as $bck => $blkcol) { // block cell
-                            // echo '<br>numbers: ' . $nk . '<br>blocks: ' . $bsk . '<br>block: ' . $bk;
-                            // print_r($blk);
                             $col = (($bk * 3) - 3) + $bck;
                             $row = (($bsk * 3) - 3) + $brk;
 
@@ -256,25 +140,19 @@ class Sudoku
                                 $this->_probable_sudoku[$row][$col] = '0' . round($nk);
                                 $this->set_blocks($this->_probable_sudoku);
                             }
-
-                            // $this->_probable_sudoku[$row][$col] = '0' . $nk;
                         }
-                        // echo '<br>row: '.$row.',col:'. $col.', nk:'.  $nk.',bsk:'. $bsk.',bk:'. $bk.',brk:'. $brk.',bck:'. $bck.'<br>';
                     }
                 }
             }
-            // $this->finalize($nk); //after 1 number is placed in all blocks as suitable by chances table.
         }
-        // $this->set_blocks($this->_probable_sudoku);
-        // print_r($this->_blocks_to_traverse);
 
-        // $this->remove_repeater();
-        $this->print_sudoku($this->_probable_sudoku);
-        if ($this->_repeater_found == 0) {
-        } else {
-            $this->_repeater_found++;
-            $this->solve2($this->_probable_sudoku);
-        }
+        // $this->print_sudoku($this->_probable_sudoku);
+        // if ($this->_repeater_found == 1) {
+        // } else {
+        //     $this->_repeater_found++;
+        //     // $this->solve2($this->_probable_sudoku);
+        // }
+        $this->remove_repeater($this->_probable_sudoku);
     }
 
     /**
@@ -287,94 +165,23 @@ class Sudoku
      */
     private function check_value_placement($row, $col, $new_val, $blocks, $block, $block_row, $block_cell)
     {
-        // $ret  = false; //return decision for the new value to be placed in the cell or not.
         $this->set_blocks($this->_probable_sudoku); //set 3x3 blocks
         $this->transpose_blocks($this->_probable_sudoku); //transpose latest changes for column repetition test
 
-
-        // print_r($this->_blocks_to_traverse);
-        // print_r($this->_chances);
-        // echo '<br> row: ' . $row . ', col: ' . $col . ', val: ' . $new_val;
-
         $u_blocks = $this->_blocks_to_traverse[$blocks][$block];
         $old_val = $this->_probable_sudoku[$row][$col];
-        $r_old_val = round($old_val);
-        //if the number is 1 place the value for now
-        // if ($new_val == 1) {
-        //     return true;
-        // }
 
         //if cell is empty place the value for now
         if ($old_val == 0) {
             return true;
         }
 
-        //if cell is not empty check for following conditions
-
-        //compare current cell value and value to change chance
-
-        //get current cell value
-        // $old_val_chances = isset($this->_chances[$old_val][$blocks][$block][$block_row][$block_cell]) ?
-        //     $this->_chances[$old_val][$blocks][$block][$block_row][$block_cell] : [];
-        // $new_val_chances = isset($this->_chances[$new_val][$blocks][$block][$block_row][$block_cell]) ?
-        //     $this->_chances[$new_val][$blocks][$block][$block_row][$block_cell] : [];
-
-        $old_val_chances = isset($this->_chances[$r_old_val][$blocks][$block]) ? $this->_chances[$r_old_val][$blocks][$block] : [];
-
-        $new_val_chances = isset($this->_chances[$new_val][$blocks][$block]) ? $this->_chances[$new_val][$blocks][$block] : [];
-
-        // echo '<br> Old Number:' . $old_val . ' | blocks:' . $blocks . ' | block:' . $block;
-        // echo '<br> current value: ' . $old_val;
-        // echo '<br> current value chances: ';
-        // print_r(count($old_val_chances, COUNT_RECURSIVE));
-        // print_r($old_val_chances);
-
-
-        // echo '<br><br><br><br> New Number:' . $new_val . ' | blocks:' . $blocks . ' | block:' . $block;
-        // echo '<br> my value: ' . $new_val;
-        // echo '<br> my value chances: ';
-        // print_r(count($new_val_chances, COUNT_RECURSIVE));
-        // print_r($new_val_chances);
-
-
-        // $who_is_more = array_count_values($this->_blocks_to_traverse[$blocks][$block]);
+        //check if old value has more than 1 occurrences
         $who_is_more = array_count_values($u_blocks);
-        // print_r($u_blocks);
 
-
-        // if (
-        //     isset($who_is_more[$this->_probable_sudoku[$row][$col]]) &&
-        //     isset($who_is_more[$new_val]) &&
-        //     $who_is_more[$this->_probable_sudoku[$row][$col]] > isset($who_is_more[$new_val])
-        // )
-
-        //is old value chance is greater than new value
-        // echo '<br><br><br>Blocks:'.$blocks.',Block:'.$block.'-----------------<br>old:' . $old_val . ', new:' . $new_val . '<br>';
-        // print_r($who_is_more[$old_val]);
-        // echo '<br>who is more:<br>';
-        // print_r($who_is_more);
-
-        if (count($old_val_chances, COUNT_RECURSIVE) > count($new_val_chances, COUNT_RECURSIVE)) {
-            // echo '<br>current:' . $this->_probable_sudoku[$row][$col];
-            // echo '<br>My value:' . $new_val . '<br>';
-            // print_r($who_is_more[$this->_probable_sudoku[$row][$col]]);
-            // $instances = array_count_values($this->_probable_sudoku[$col])[$new_val];
-
-            //is old value repeating more than once in the BLOCK
-        }
         if (isset($who_is_more[$old_val]) && $who_is_more[$old_val] > 1) {
-            // echo 'returned:' . $new_val;
             return true;
         }
-
-
-        // if ($blocks == 2 && $block == 1) {
-        //     // die();
-        // }
-        // if ($val == 3) {
-        //     die();
-        // }
-        // $this->_probable_sudoku;
 
         return false;
     }
@@ -391,123 +198,216 @@ class Sudoku
         // $this->_probable_sudoku = $this->_probable_sudoku;
         $this->_probable_sudoku = $unsolved_sudoku;
         // $this->print_sudoku();
-        echo '<br>--------------------------------------------repeater: ' . $this->_repeater_found . '<br>';
         // print_r($this->_blocks_to_traverse);
 
         $this->_chances = [];
-        for ($i = 1; $i <= 9; $i++) {
-            foreach ($this->_blocks_to_traverse as $blocks_row => $bs) { //3 blocks per loop
-                foreach ($bs as $block => $b) { //1 block per loop
-                    $block_col = 0;
-                    $block_row = 0; //traversing on block rows 3 on top then start from 0 next line then next line.
-                    $blk = 1; //row of block
-                    $skip = 0;
-                    $success = 1;
-                    $bb = $this->_blocks[$blocks_row][$block];
+        // for ($i = 1; $i <= 9; $i++) {
+        foreach ($this->_blocks_to_traverse as $blocks_row => $bs) { //3 blocks per loop
+            // echo '<br>' . $blocks_row . '<br>';
+            // $column_check_complete = 0;
+            // for ($r = 1; $r <= 2; $r++) {
+            foreach ($bs as $block => $b) { //1 block per loop
+                $block_col = 0;
+                $block_row = 0; //traversing on block rows 3 on top then start from 0 next line then next line.
+                $blk = 1; //row of block
+                $skip = 0;
+                $success = 1;
+                $bb = $this->_blocks[$blocks_row][$block];
 
-                    // print_r($bb);
+                // print_r($bb);
 
-                    if (!in_array($i, $bb)) {
-                        // $search_col = 0;
-                        foreach ($b as $ttt => $c) { //1 cell of block per loop
+                // if (!in_array($i, $bb)) {
+                // $search_col = 0;
+                foreach ($b as $ttt => $c) { //1 cell of block per loop
 
-                            // echo '<br>Cell value:' . $c . '<br>';
-                            if ($ttt > 2 && $blk == 1) {
-                                $blk = 2;
-                                $skip = 0;
-                                $block_row++;
-                                $block_col = 0;
-                                // echo '<br>block col: ' . $block_col . '<br>';
-                            }
-                            if ($ttt > 5 && $blk == 2) {
-                                $blk = 3;
-                                $skip = 0;
-                                $block_row++;
-                                $block_col = 0;
-                                // echo '<br>block col: ' . $block_col . '<br>';
-                            }
-                            // echo '<br>C1:'.$c;
+                    // echo '<br>Cell value:' . $c . '<br>';
+                    // print_r($c);
 
-                            if ($c == 0 || strlen($c) > 1) {
-                                // echo ',C2:'.$c.'<br>';
-
-                                // echo '<br>Skip:' . $skip . '<br>';
-
-                                if ($skip) continue;
-
-                                // if (in_array($i, $this->_blocks[$block_row][$block])) {
-                                //     // echo '<br>======= Inside 3rd check on: ' . $i . '<br>';
-                                //     // echo json_encode($this->_blocks[$block_row][$block]);
-
-                                //     // print_r($this->_blocks[$block_row][$block]);
-                                //     $success = 0;
-                                // }
-
-                                $search_row = (($blocks_row * 3) - 3) + $block_row;
-
-                                // echo '<br><br>Blocks:' . $blocks_row . ',Block:' . $block . ',Row:' . $block_row . ',cell:' . $ttt .
-                                //     '<br> >>>---------------check rows:' . (in_array($i, $this->_unsolved_sudoku[$search_row]) ? 'fail' : 'pass');
-                                // echo '<br>Row Values: ' . json_encode($this->_unsolved_sudoku[$search_row]) . '<br>';
-
-
-
-                                if (in_array($i, $this->_unsolved_sudoku[$search_row])) {
-                                    // echo '<br>======= Inside 1st check on: ' . $i . '<br>';
-                                    // echo json_encode($this->_unsolved_sudoku[$search_row]);
-                                    $skip = 1;
-                                    $success = 0;
-                                }
-
-                                //$block_col = ($block*3)-1;
-
-                                // if ($blk == 2 && $search_col < 3 && $search_col > 6) $search_col = 3;
-                                // if ($blk == 3 && $search_col < 6) $search_col = 6;
-                                $search_col = (($block * 3) - 3) + $block_col;
-
-                                echo '<br><br>|||||||||Blocks:' . $blocks_row . ',Block:' . $block . ',Col:' . ($block_col) . ',cell:' . ($ttt)  .
-                                    '<br> ]]]]---------------check columns:' . (in_array($i, $this->_transposed[$search_col]) ? 'fail' : 'pass');
-                                echo '<br>Search col: ' . $search_col . ' <br>Column Values: ' . json_encode($this->_transposed[$search_col]) . '<br>';
-
-                                if (!$skip && in_array($i, $this->_transposed[$search_col])) {
-                                    //      echo '<br><br>|||||||||Blocks:' . $blocks_row . ',Block:' . $block . ',Col:' . ($block_col) . ',cell:' . ($ttt)  .
-                                    //     '<br> ]]]]---------------check columns:' . (in_array($i, $this->_transposed[$search_col]) ? 'fail' : 'pass');
-                                    // echo '<br>Search col: ' . $search_col . ' <br>Column Values: ' . json_encode($this->_transposed[$search_col]) . '<br>';
-
-                                    echo '<br>Failed======= Inside 2nd check on: ' . $i . '<br>';
-                                    // echo json_encode($this->_transposed[$search_col]);
-
-                                    $success = 0;
-                                }
-
-                                //chances for numbers e.g. chances for 1 in a single cell of block
-                                if ($success) {
-                                    $this->_chances[$i][$blocks_row][$block][$block_row][$block_col] = 1;
-
-                                    // $col = (($block * 3) - 3) + $block_col;
-                                    // $row = (($blocks_row * 3) - 3) + $block_row;
-
-                                    // if ($this->check_value_placement($row, $col,  $i, $blocks_row, $block, $block_row, $block_col)) {
-                                    //     $this->_probable_sudoku[$row][$col] = '0' . $i;
-                                    // }
-                                }
-                                $success  = 1;
-                            }
-                            // echo '<br>------------------------------------------------------------' . $block_col;
-                            if ($block_col < 2) $block_col++;
-                            // if ($ttt > 6 && $blk == 3) $block_col += 6;
-                        }
-                        // $block_col -= 3;
+                    if ($ttt > 2 && $blk == 1) {
+                        $blk = 2;
+                        $skip = 0;
+                        $block_row++;
+                        $block_col = 0;
+                        // echo '<br>block col: ' . $block_col . '<br>';
                     }
+                    if ($ttt > 5 && $blk == 2) {
+                        $blk = 3;
+                        $skip = 0;
+                        $block_row++;
+                        $block_col = 0;
+                        // echo '<br>block col: ' . $block_col . '<br>';
+                    }
+                    // echo '<br>C1:'.$c;
+
+                    if ($c == 0 || strlen($c) > 1) {
+                        // echo ',C2:'.$c.'<br>';
+
+                        // echo '<br>Skip:' . $skip . '<br>';
+
+                        // if ($skip) continue;
+
+                        // if (in_array($i, $this->_blocks[$block_row][$block])) {
+                        //     // echo '<br>======= Inside 3rd check on: ' . $i . '<br>';
+                        //     // echo json_encode($this->_blocks[$block_row][$block]);
+
+                        //     // print_r($this->_blocks[$block_row][$block]);
+                        //     $success = 0;
+                        // }
+
+                        $search_row = (($blocks_row * 3) - 3) + $block_row;
+
+                        // echo '<br><br>Blocks:' . $blocks_row . ',Block:' . $block . ',Row:' . $block_row . ',cell:' . $ttt .
+                        //     '<br> >>>---------------check rows:' . (in_array($i, $this->_probable_sudoku[$search_row]) ? 'fail' : 'pass');
+                        // echo '<br>Row Values: ' . json_encode($this->_probable_sudoku[$search_row]) . '<br>';
+
+                        // echo '------<br>Row Values: ' . json_encode($this->_probable_sudoku[$search_row]) . '<br>';
+
+                        if (
+                            $this->_column_check_complete &&
+                            (@array_count_values($this->_probable_sudoku[$search_row])[$c] > 1 ||
+                                @array_count_values($this->_probable_sudoku[$search_row])[round($c)] == 1)
+                        ) {
+                            // echo '<br>Collection:' . $blocks_row . ', Block:' . $block . ', Row:' . $block_row . ', cell:' . $ttt . ': fail';
+                            // echo '<br>Row Values: ' . json_encode($this->_probable_sudoku[$search_row]) . '<br>';
+                            // $skip = 1;
+                            $success = 0;
+                        }
+
+                        //$block_col = ($block*3)-1;
+
+                        // if ($blk == 2 && $search_col < 3 && $search_col > 6) $search_col = 3;
+                        // if ($blk == 3 && $search_col < 6) $search_col = 6;
+                        $search_col = (($block * 3) - 3) + $block_col;
+
+                        // echo '<br><br>|||||||||Blocks:' . $blocks_row . ',Block:' . $block . ',Col:' . ($block_col) . ',cell:' . ($ttt)  .
+                        //     '<br> ]]]]---------------check columns:' . (in_array($i, $this->_transposed[$search_col]) ? 'fail' : 'pass');
+                        // echo '<br>Search col: ' . $search_col . ' <br>Column Values: ' . json_encode($this->_transposed[$search_col]) . '<br>';
+
+                        if (
+                            !$this->_column_check_complete &&
+                            ($success &&
+                                @array_count_values($this->_transposed[$search_col])[$c] > 1 ||
+                                @array_count_values($this->_transposed[$search_col])[round($c)] == 1)
+                        ) {
+                            // print_r($this->_transposed[$search_col]);
+                            $success = 0;
+                        }
+
+                        //chances for numbers e.g. chances for 1 in a single cell of block
+                        if (!$success) {
+                            // echo '<br>--------------------------' . $c;
+                            $col = (($block * 3) - 3) + $block_col;
+                            $row = (($blocks_row * 3) - 3) + $block_row;
+                            $this->_repeaters[$blocks_row][$block][$row][$col] = $c;
+                            // $this->_chances[$i][$blocks_row][$block][$block_row][$block_col] = 1;
+
+                            // $col = (($block * 3) - 3) + $block_col;
+                            // $row = (($blocks_row * 3) - 3) + $block_row;
+
+                            // if ($this->check_value_placement($row, $col,  $i, $blocks_row, $block, $block_row, $block_col)) {
+                            //     $this->_probable_sudoku[$row][$col] = '0' . $i;
+                            // }
+                        }
+
+                        // $this->_probable_sudoku[$row][$col] = '0' . round($nk);
+                        // $this->set_blocks($this->_probable_sudoku);
+
+                        $success  = 1;
+                    }
+                    // echo '<br>------------------------------------------------------------' . $block_col;
+                    if ($block_col < 2) $block_col++;
+                    // if ($ttt > 6 && $blk == 3) $block_col += 6;
                 }
+                // $block_col -= 3;
+                // }
+                // print_r($this->_repeaters);
+                // break 3;
+                // $this->print_sudoku($this->_probable_sudoku);
+
+
+                // if (count($this->_repeaters) == 0 && $column_check_complete) {
+                //     // print_r('Column check on collection ' . $blocks_row . ', block ' . $block . ' is complete');
+                // } else if (count($this->_repeaters) == 0 && !$column_check_complete) {
+                //     // print_r('Row check on collection ' . $blocks_row . ', block ' . $block . ' is complete');
+                // }
+
+                if (count($this->_repeaters) == 0) {
+                    // $column_check_complete = 1;
+                    // print_r($this->_repeaters);
+                    $this->print_sudoku($this->_probable_sudoku);
+                    print_r('Column check on collection ' . $blocks_row . ', block ' . $block . ' is complete');
+
+                    continue;
+                }
+                $this->set_sudoku();
             }
+            // if (count($this->_repeaters) == 0) {
+            //     // $column_check_complete = 1;
+            // }
+            // }
         }
+
+        if (count($this->_repeaters) == 0 && $this->_column_check_complete == 0) {
+            // $this->_column_check_complete = 1;
+            // $this->remove_repeater($this->_probable_sudoku);
+        }
+        // }
+        // $this->set_sudoku();
+
+
+
+        // print_r($this->_repeaters);
         // $this->finalize();
-        $this->place_num();
+        // $this->place_num();
 
         // echo '<br> [number: [ blocks: [ block: [block row:[ cell key: chance, cell key: chance,... ],... ],...],... ],... ]<br>';
         // echo '<br>--------------------------------------- [number: [ blocks: [ block: [block row:[ cell key: chance, cell key: chance,... ],... ],...],... ],... ]<br>';
         // print_r($this->_chances);
         // $this->print_sudoku($this->_probable_sudoku);
+    }
+
+    private function set_sudoku()
+    {
+        // print_r($this->_repeaters);
+        $this->_repeaters = array_map(function ($a) {
+            return array_map(function ($b) {
+                $shufflable = call_user_func_array('array_merge', $b);
+                shuffle($shufflable);
+                $i = 0;
+                foreach ($b as $k => $bb) {
+                    foreach ($bb as $kk => $bbb) {
+                        $b[$k][$kk] = $shufflable[$i];
+                        $i++;
+                    }
+                }
+                return $b;
+            }, $a);
+        }, $this->_repeaters);
+
+        foreach ($this->_repeaters as $k => $v) {
+            foreach ($v as $kk => $vv) {
+                foreach ($vv as $kkk => $vvv) {
+                    foreach ($vvv as $kkkk => $vvvv) {
+                        $this->_probable_sudoku[$kkk][$kkkk] = '0' . round($vvvv);
+                    }
+                }
+            }
+        }
+        // print_r($this->_repeaters);
+
+        // print_r($this->_probable_sudoku);
+        $this->_repeaters = [];
+        // $this->set_blocks($this->_probable_sudoku);
+        // if ($this->_repeater_found == 5) {
+        // $this->print_sudoku($this->_probable_sudoku);
+        if ($this->_repeater_found == 10) {
+            echo '<br>--------------------------------------------repeater: ' . $this->_repeater_found . '<br>';
+            // $this->print_sudoku($this->_probable_sudoku);
+        } else {
+
+            $this->_repeater_found++;
+            $this->remove_repeater($this->_probable_sudoku);
+        }
     }
 
     /**
@@ -517,8 +417,6 @@ class Sudoku
      */
     private function set_blocks($sudoku = null)
     {
-
-
         $original = $sudoku ? true : false;
         $sudoku = $sudoku ?: $this->_unsolved_sudoku;
         if ($original) {
@@ -618,99 +516,7 @@ class Sudoku
         print_r($this->_trim_blocks);
     }
 
-    /**
-     * Solve Suduko
-     *
-     * @return void
-     */
-    // public function solve()
-    // {
-    // $this->transpose_blocks();
-    // $this->set_blocks();
-    // $this->print_sudoku();
-    // $this->solve2();
-
-    // // print_r($this->_blocks);
-    // print_r($this->_blocks_to_traverse);
-
-    // foreach ($this->_unsolved_sudoku as $k => $v) {
-    //     echo '<br>$k = ' . $k . '<br>';
-    //     foreach ($v as $kk => $vv) {
-    //         echo '<br>$kk = ' . $kk . '<br>';
-
-    //         if ($vv === 0) {
-    //             echo '<br>-------------------------Empty cell<br>';
-    //             for ($i = 1; $i <= 9; $i++) {
-    //                 echo '<br>----------------------------------------------------------------------------------------------------$i = ' . $i . '<br>';
-
-    //                 $valid = true;
-    //                 echo '<br>---------------1st check:' . in_array($i, $this->_unsolved_sudoku[$k]) . '<br>';
-
-    //                 if (in_array($i, $this->_unsolved_sudoku[$k])) {
-    //                     echo '<br>======= Inside 1st check on: ' . $i . '<br>';
-    //                     echo json_encode($this->_unsolved_sudoku[$k]);
-    //                     // print_r($this->_unsolved_sudoku[$k]);
-    //                     $valid = false;
-    //                 }
-
-    //                 echo '<br>---------------2nd check:' . in_array($i, $this->_transposed[$kk]) . '<br>';
-
-    //                 if ($valid && in_array($i, $this->_transposed[$kk])) {
-    //                     echo '<br>======= Inside 2nd check on: ' . $i . '<br>';
-    //                     echo json_encode($this->_transposed[$kk]);
-
-    //                     // print_r($this->_transposed[$k]);
-    //                     $valid = false;
-    //                 }
-    //                 if ($kk < 3) $block = 1;
-    //                 if ($kk > 2) $block = 2;
-    //                 if ($kk > 5) $block = 3;
-
-    //                 if ($k < 3) $block_row = 1;
-    //                 if ($k > 2) $block_row = 2;
-    //                 if ($k > 5) $block_row = 3;
-    //                 echo '<br>---------------3rd check:' . in_array($i, $this->_blocks[$block_row][$block]) . '<br>';
-
-
-    //                 if ($valid && in_array($i, $this->_blocks[$block_row][$block])) {
-    //                     echo '<br>======= Inside 3rd check on: ' . $i . '<br>';
-    //                     echo json_encode($this->_blocks[$block_row][$block]);
-
-    //                     // print_r($this->_blocks[$block_row][$block]);
-    //                     $valid = false;
-    //                 }
-
-    //                 if ($valid) {
-    //                     $this->_unsolved_sudoku[$k][$kk] = '0' . $i;
-    //                     $this->transpose_blocks();
-    //                     $this->set_blocks();
-    //                     $this->print_sudoku();
-    //                     break;
-    //                 }
-    //                 // if ($k > 1) {
-    //                 //     break 3;
-    //                 // }
-    //             }
-    //         } else {
-    //             echo '<br>-------------------------Not an empty cell<br>';
-    //         }
-    //     }
-    // }
-
-    //get the biggest block first
-    // $bb = $this->get_biggest_block();
-
-    // print_r($this->_blocks[$this->_k1][$this->_k2]);
-
-    // foreach ($this->_unsolved_sudoku as $k => $v) {
-    // }
-
-    //print sudoku
-    // $this->print_sudoku();
-
-
-    // $this->print_sudoku($this->_transposed);
-    // }
+    
 }
 
 
